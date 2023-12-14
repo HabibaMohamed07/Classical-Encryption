@@ -1,11 +1,16 @@
 import numpy as np
 from preprocess import text_preprocess
 
-def ceaser(text,shift):
-    cipher=""
-    text=text_preprocess(text)
+# Function to write the encryption result to a text file
+def write_to_file(result):
+    with open('encryption_results.txt', 'a') as file:
+        file.write(result + '\n')
+
+def ceaser(text, shift):
+    cipher = ""
+    text = text_preprocess(text)
     for i in text:
-        cipher+=(chr((ord(i)-97+shift)%26+97))
+        cipher += (chr((ord(i) - 97 + shift) % 26 + 97))
     return cipher
 
 def create_playfair_matrix(key,i_j):
@@ -28,13 +33,13 @@ def find_indices(matrix, char):
     indices = np.where(np.array(matrix) == char)
     return list(zip(indices[0], indices[1]))
 
-def playfair(key,text,i_j = 'i'):
-    cipher=""
+def playfair(key, text, i_j='i'):
+    cipher = ""
     key = "".join(dict.fromkeys(key))
-    text=text_preprocess(text)
-    text=text.replace("i",i_j)
-    text=text.replace("j",i_j)
-    matrix=create_playfair_matrix(key,i_j)
+    text = text_preprocess(text)
+    text = text.replace("i", i_j)
+    text = text.replace("j", i_j)
+    matrix = create_playfair_matrix(key, i_j)
     new_string = ''.join([char + 'x' if i < len(text) - 1 and char == text[i + 1] and i % 2 == 0 else char for i, char in enumerate(text)])
 
     pairs = [(new_string[i], new_string[i + 1] if i + 1 < len(new_string) else 'x') for i in range(0, len(new_string), 2)]
@@ -46,22 +51,22 @@ def playfair(key,text,i_j = 'i'):
         index2 = find_index(matrix, char2)
         if index1[0] == index2[0]:
             result = "Same Row"
-            new_index1=(index1[0],(index1[1]+1)%5)
-            new_index2=(index2[0],(index2[1]+1)%5)
+            new_index1 = (index1[0], (index1[1] + 1) % 5)
+            new_index2 = (index2[0], (index2[1] + 1) % 5)
         elif index1[1] == index2[1]:
             result = "Same Column"
-            new_index1=((index1[0]+1)%5,index1[1])
-            new_index2=((index2[0]+1)%5,index2[1])
+            new_index1 = ((index1[0] + 1) % 5, index1[1])
+            new_index2 = ((index2[0] + 1) % 5, index2[1])
         else:
             result = "Different Row and Column"
-            new_index1=(index1[0],index2[1])
-            new_index2=(index2[0],index1[1])
-        new_pair=(new_index1,new_index2)
+            new_index1 = (index1[0], index2[1])
+            new_index2 = (index2[0], index1[1])
+        new_pair = (new_index1, new_index2)
         results.append(new_pair)
     for pair in results:
         letter1 = matrix[pair[0][0]][pair[0][1]]
         letter2 = matrix[pair[1][0]][pair[1][1]]
-        cipher+=letter1+letter2
+        cipher += letter1 + letter2  
     return cipher
 
 def find_index(matrix, char):
@@ -70,11 +75,11 @@ def find_index(matrix, char):
             return i, row.index(char)
 
 def hill(text):
-    cipher=""
+    cipher = ""
     matrix = np.array([[2, 4, 12],
-                   [9, 1, 6],
-                   [7, 5, 3]])
-    text=text_preprocess(text)
+                       [9, 1, 6],
+                       [7, 5, 3]])
+    text = text_preprocess(text)
     triplets = []
 
     i = 0
@@ -86,43 +91,46 @@ def hill(text):
             triplet = (text[i], 'x', 'x')
 
         if triplet[1] == triplet[2]:
-            triplet = (triplet[0], triplet[1] , 'x')
-            i += 2 
+            triplet = (triplet[0], triplet[1], 'x')
+            i += 2
         else:
             i += 3
 
         triplets.append(triplet)
     for pair in triplets:
-        matrix_pair=np.array([[letter_to_index(pair[0]),letter_to_index(pair[1]),letter_to_index(pair[2])]])
-        enc=np.dot(matrix_pair,matrix)%26
+        matrix_pair = np.array([[letter_to_index(pair[0]), letter_to_index(pair[1]), letter_to_index(pair[2])]])
+        enc = np.dot(matrix_pair, matrix) % 26
         for i in enc:
             for j in i:
-                cipher+=(index_to_letter(j))
+                cipher += (index_to_letter(j))  
     return cipher
+
+
 def letter_to_index(letter):
     letter = letter.upper()
     return ord(letter) - ord('A')
 def index_to_letter(index):
     return chr(index + ord('A') ).lower()
-def vigenere(key,text,auto=False):
-    cipher=""
-    text=text_preprocess(text)
-    text=text.upper()
-    key=key.upper()
+def vigenere(key, text, auto=False):
+    cipher = ""
+    text = text_preprocess(text)
+    text = text.upper()
+    key = key.upper()
     if not auto:
         for i in range(len(text)):
             index = letter_to_index(text[i])
             k = letter_to_index(key[i % len(key)])
-            cipher+=index_to_letter((index+k)%26)
+            cipher += index_to_letter((index + k) % 26)
     else:
-        key = key+text
-        key=key[:len(text)]
+        key = key + text
+        key = key[:len(text)]
         for i in range(len(text)):
             index = letter_to_index(text[i])
             k = letter_to_index(key[i])
-            cipher+=index_to_letter((index+k)%26)
+            cipher += index_to_letter((index + k) % 26)
     return cipher
-def vernam(key,text):
+
+def vernam(key, text):
     text = text_preprocess(text)
     text = text.upper()
     key = key.upper()
@@ -130,8 +138,9 @@ def vernam(key,text):
     for i in range(len(text)):
         index = letter_to_index(text[i])
         k = letter_to_index(key[i % len(key)])
-        cipher+=index_to_letter((index^k)%26)
+        cipher += index_to_letter((index ^ k) % 26)
     return cipher
+
 # print("ceaser: ",ceaser("Hello world",3))
 # print("playfair: ",playfair("archangel","balloon worldt"))
 # print("hill: ",hill("balloon world"))
